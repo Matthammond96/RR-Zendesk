@@ -1,0 +1,15 @@
+{
+  "name": "zendeskmiddleman",
+  "version": "1.0.0",
+  "description": "This will act as a gateway between shopify and zendesk to create users and tickets using the Zendesk API",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+  },
+  "author": "Ralph & Russo",
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
