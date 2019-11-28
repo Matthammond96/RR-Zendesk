@@ -1,0 +1,197 @@
+{%- comment -%}
+
+  Takes an image object + config. parameters, outputs responsive images using
+  either "sizes" attribute with a range of sources, or fixed width images with
+  1x and 2x sources.
+
+  Note: "src" attributes omitted to avoid double download on IE11. This snippet
+  is intended to be used with Picturefill, which sets the src.
+
+  Parameters:
+
+  One of the following is required: img_obj | asset_url | file_url
+
+  * img_obj: (required) a Liquid image object
+  * asset_url: (required) supply an asset image URL instead of image object
+  * file_url: (required) supply an file image URL instead of image object
+
+  * sizes_str: (optional) string for "sizes" attribute (default = '100vw')
+  * srcset_str: (optional) string containing comma-delimited list of image sizes
+  * img_width: (optional) integer in px for outputting fixed width images
+  * img_attrs: (optional) string containing any custom <img> attributes needed
+  * class_str: (optional) string containing any classes needed
+  * alt_str: (optional) image alt text (if left blank takes from img_obj.alt)
+  * lazy: (optional) true activate lazy plugin https://github.com/aFarkas/lazysizes, js needed
+  * lazy_blur: (optional) true will activate the blur up plugin from lazysizes https://github.com/aFarkas/lazysizes/tree/master/plugins/blur-up
+  * lazy_blur_size: (optional) image size for blur up plugin from lazysizes https://github.com/aFarkas/lazysizes/tree/master/plugins/blur-up
+
+  Example Usage:
+
+  {%-
+    include "img",
+    img_obj: product.featured_image,
+    sizes_str: "(min-width: 800px) 220px, 50vw"
+  -%}
+
+  {%-
+    include "img",
+    img_obj: product.featured_image,
+    img_width: 550
+  -%}
+
+  {%-
+    include 'img',
+    file_url: 'lba-header-a.jpg',
+    sizes_str: '(min-width: 800px) 50vw, 100vw'
+  -%}
+
+{%- endcomment -%}
+{%- assign notset = false -%}
+{%- if lazy != blank -%}
+  {%- assign lazy = true -%}
+{%- endif -%}
+{%- if sizes_str == blank -%}
+  {%- assign sizes_str = '100vw' -%}
+{%- endif -%}
+{%- if lazy_blur_size == blank -%}
+  {%- assign lazy_blur_size = '100x' -%}
+{%- endif -%}
+{%- if alt_str == blank -%}
+  {%- if img_obj != blank -%}
+    {%- assign alt_str = img_obj.alt | escape -%}
+  {%- else -%}
+    {%- assign alt_str = '' -%}
+  {%- endif -%}
+{%- endif -%}
+{%- if img_width -%}
+  {%- assign img_size_1x = img_width | append: 'x' -%}
+  {%- assign img_size_2x = img_width | times: 2 | append: 'x' -%}
+
+  {%- if img_obj -%}
+    {%- assign alt_str = img_obj.alt | escape -%}
+    {%- assign img_src_1x = img_obj | img_url: img_size_1x -%}
+    {%- assign img_src_2x = img_obj | img_url: img_size_2x -%}
+    {%- elsif asset_url -%}
+    {%- assign img_src_1x = asset_url | asset_img_url: img_size_1x -%}
+    {%- assign img_src_2x = asset_url | asset_img_url: img_size_2x -%}
+  {%- else -%}
+    {%- assign img_src_1x = file_url | file_img_url: img_size_1x -%}
+    {%- assign img_src_2x = file_url | file_img_url: img_size_2x -%}
+  {%- endif -%}
+  {%- if loadbox -%}
+    <span class="loadbox {% if lazy_blur %}loadbox-blurup{% endif %} {{ loadbox_class }} ">
+  {%- endif -%}
+  <img
+    {{ img_attrs }}
+    data-aspect-ratio="
+    {%- if img_obj -%}
+      {{ img_obj.aspect_ratio }}
+    {%- elsif asset_url -%}
+      {{ asset_url.aspect_ratio }}
+    {%- else -%}
+      {{ file_url.aspect_ratio }}
+    {%- endif -%}
+    "
+    style="--aspect-ratio:
+    {%- if img_obj -%}
+      {{ img_obj.aspect_ratio }}
+      {%- elsif asset_url -%}
+      {{ asset_url.aspect_ratio }}
+    {%- else -%}
+      {{ file_url.aspect_ratio }}
+    {%- endif -%};"
+    {%- if class_str != blank -%}
+      {%- if lazy -%}
+        class="{{ class_str }} lazyload"
+      {%- else -%}
+        class="{{ class_str }}"
+      {%- endif -%}
+      {%- elsif lazy -%}
+      class="lazyload"
+    {%- endif -%}
+    width="{{ img_width }}"
+    alt="{{ alt_str }}"
+    {%- if lazy %} data-{% endif %}srcset="
+    {{ img_src_1x }} 1x,
+    {{ img_src_2x }} 2x"
+    {%- if lazy -%} srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="{% endif %}
+  >
+  {%- if loadbox -%}
+    </span>
+  {%- endif -%}
+{%- else -%}
+  {%- if srcset_str == blank -%}
+    {%- assign srcset_str = '640,750,828,1136,1334,1700,2000,2300,2600' -%}
+  {%- endif -%}
+  {%- assign srcset_arr = srcset_str | split: ',' -%}
+  {%- if srcset_arr.size == 1 -%}
+    {%- assign notset = true -%}
+  {%- endif -%}
+  {%- if img_obj -%}
+    {%- assign alt_str = img_obj.alt | escape -%}
+  {%- endif -%}
+  {%- if loadbox -%}
+    <span class="loadbox {% if lazy_blur %}loadbox-blurup{% endif %} {{ loadbox_class }}" style="--aspect-ratio:
+    {%- if img_obj -%}
+      {{ img_obj.aspect_ratio }}
+      {%- elsif asset_url -%}
+      {{ asset_url.aspect_ratio }}
+    {%- elsif file_url -%}
+      {{ file_url.aspect_ratio }}
+    {%- else -%}1{%- endif -%};">
+  {%- endif -%}
+  <img
+    {{ img_attrs }}
+    data-aspect-ratio="
+    {%- if img_obj -%}
+      {{ img_obj.aspect_ratio }}
+    {%- elsif asset_url -%}
+      {{ asset_url.aspect_ratio }}
+    {%- else -%}
+      {{ file_url.aspect_ratio }}
+    {%- endif -%}
+    "
+    style="--aspect-ratio:
+    {%- if img_obj -%}
+      {{ img_obj.aspect_ratio }}
+      {%- elsif asset_url -%}
+      {{ asset_url.aspect_ratio }}
+    {%- else -%}
+      {{ file_url.aspect_ratio }}
+    {%- endif -%};"
+    {%- if class_str != blank -%}
+      {%- if lazy -%} class="{{ class_str }} lazyload"
+      {%- else -%} class="{{ class_str }}"{%- endif -%}
+      {%- elsif lazy -%}
+      class="lazyload"
+    {%- endif -%}
+    alt="{{ alt_str }}"
+    {%- if notset == false -%}{%- if lazy != blank -%} data-{%- endif -%}sizes="{{ sizes_str }}"{%- endif -%}
+    {%- if lazy != blank -%} data-{%- endif -%}{%- if notset -%}src{%- else -%}srcset{%- endif -%}="
+      {%- for src_size in srcset_arr -%}
+        {%- assign size_str = src_size | append: 'x' -%}
+        {%- if img_obj -%}
+          {{ img_obj | img_url: size_str }} {{ src_size }}w
+        {%- elsif asset_url -%}
+          {{ asset_url | asset_img_url: size_str }} {{ src_size }}w
+        {%- else -%}
+          {{ file_url | file_img_url: size_str }} {{ src_size }}w
+        {%- endif -%}
+        {%- unless forloop.last -%},{%- endunless -%}
+      {%- endfor -%}
+  "
+    {%- if notset == false -%}{%- if lazy -%} srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="{% endif %}{% endif %}
+    {%- if lazy and lazy_blur -%} data-lowsrc=
+      {%- if img_obj -%}
+        "{{ img_obj | img_url: lazy_blur_size }}"
+      {%- elsif asset_url -%}
+        "{{ asset_url | asset_img_url: lazy_blur_size }}"
+       {%- else -%}
+        "{{ file_url | file_img_url: lazy_blur_size }}"
+      {%- endif -%}
+    {%- endif -%}
+  >
+  {%- if loadbox -%}
+    </span>
+  {%- endif -%}
+{%- endif -%}
