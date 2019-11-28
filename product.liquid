@@ -1,0 +1,167 @@
+<section itemscope itemtype="http://schema.org/Product">
+  {%- assign enquire = false -%}
+  {%- assign current_variant = product.selected_or_first_available_variant -%}
+  {%- assign featured_image = current_variant.featured_image | default: product.featured_image -%}
+  {%- assign product_header_class = 'plain' -%}
+  {%- for collection in product.collections -%}
+    {% if collection.handle contains 'ready-to-wear' %}
+      {% assign product_header_class = 'gradient' %}
+    {% endif %}
+  {%- endfor -%}
+
+  <meta itemprop="name" content="{{ product.title }}{% unless product.has_only_default_variant %} - {{ current_variant.title }}{% endunless %}">
+  <meta itemprop="url" content="{{ shop.url }}{{ current_variant.url }}">
+  <meta itemprop="brand" content="{{ product.vendor }}">
+  <meta itemprop="image" content="{{ featured_image | img_url: '600x600' }}">
+  <meta itemprop="sku" content="{{ product.variants.first.sku }}">
+  <meta itemprop="description" content="{{ product.description | strip_html | escape }}">
+
+  <div class="product-header {{ product_header_class }}">
+    <div class="page-width page-width--full">
+      <div class="grid grid__flex product-content__wrapper">
+        {%- assign img_sizes_str = '(min-width: 800px) 21vw, 100vw' -%}
+        {%- assign srcset_str = '1200' -%}
+        <div class="grid__item medium-down--one-whole large-up--one-third product-image__wrapper">
+          <div class="product-image__container" data-image-switcher>
+            {%- if product.images.size > 4 -%}
+              {%- if product.type != 'Ready-To-Wear' -%}
+                {%- if product.images[3] == blank -%}
+                  {%- assign first_image = product.images[1] -%}
+                {%- else -%}
+                  {%- assign first_image = product.images[3] -%}
+                {%- endif -%}
+              {%- else -%}
+                {%- assign first_image = product.images[3] -%}
+              {%- endif -%}
+            {%- else -%}
+              {%- assign first_image = product.images[1] -%}
+            {%- endif -%}
+          {%-
+            include 'img',
+            sizes_str: img_sizes_str,
+            img_obj: first_image,
+            lazy: true,
+            loadbox: true,
+            lazy_blur: true,
+            loadbox_class: 'loadbox--transparent'
+          -%}
+          </div>
+        </div>
+        <div class="grid__item medium-down--one-whole large-up--one-third product-content">
+          <div class="product__info text-center" data-section-id="{{ section.id }}" data-section-type="product" data-enable-history-state="true">
+            <div class="product-panel">
+              <div class="product-panel__holder">
+                <div class="product-panel__title-image">
+                  <div class="product-panel__image hide">
+                    {%-
+                      include 'img',
+                      sizes_str: '90',
+                      img_obj: product.featured_image,
+                      lazy: true
+                    -%}
+                  </div>
+                  <div class="product-panel__title">
+                    {%- include 'product-title-price' -%}
+                  </div>
+                </div>
+                {%- if section.settings.product_options -%}
+                  {%- if product.type != 'Ready-To-Wear' -%}
+                    {%- include 'product.options' -%}
+                  {%- endif -%}
+                {%- endif -%}
+                <div class="product-panel__form">
+                  {%- for tag in product.tags -%}
+                    {%- if tag == 'enquire' -%}
+                      {%- assign enquire = true -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {%- if enquire -%}
+                    <div class="product-enquire">
+                      <a class="btn" data-customer-care="enquiry-form" data-enquire="{{ product.first_available_variant.sku }}">{{ 'products.product.enquire' | t }}</a>
+                    </div>
+                  {%- else -%}
+                    {%- include 'product-form' -%}
+                  {%- endif -%}
+                </div>
+              </div>
+            </div>
+            {%- unless product == empty -%}
+            <script type="application/json" data-product-json>
+            {{ product | json }}
+            </script>
+            {%- endunless -%}
+          </div>
+          <div class="social-sharing-popup">
+            <a class="social_btn popup-modal" href="#social-sharing">
+              {%- include 'icon-share' -%}
+              <span>{{ 'products.product.social_sharing' | t }}</span>
+            </a>
+            <div id="social-sharing" class="rnr-popup social mfp-hide">
+              <div class="popup-content">
+                <h2>{{ 'products.product.social_title' | t }}</h2>
+                {%- include 'social-sharing', share_title: product.title, share_permalink: product.url, share_image: product -%}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid__item medium-down--one-whole large-up--one-third main-gallery__wrapper">
+          <div class="product-image__container">
+            {%- include 'main-gallery' -%}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-width">
+    <div class="grid">
+      <div class="grid__item medium-down--one-whole large-up--one-half description-image">
+        <div class="product-image__container" data-description-gallery>
+          {%- for image in product.images -%}
+            {%- if image.alt == 'description' -%}
+              <div>
+                {%-
+                  include 'img',
+                  sizes_str: img_sizes_str,
+                  img_obj: image,
+                  lazy: true,
+                  loadbox: true,
+                  lazy_blur: true,
+                  loadbox_class: 'loadbox--transparent'
+                -%}
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      </div>
+      <div class="grid__item medium-down--one-whole large-up--one-half">
+        {%- include 'description-tabs' -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+  {
+    "name": "Product pages",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "show_share_buttons",
+        "label": "Show social sharing buttons",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "product_options",
+        "label": "Enable Colour options",
+        "default": false,
+        "info": "Only on non Clothes products"
+      },
+      {
+        "type": "page",
+        "id": "delivery_page",
+        "label": "Choose Delivery page"
+      }
+    ]
+  }
+{% endschema %}
