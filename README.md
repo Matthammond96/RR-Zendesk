@@ -11,3 +11,6 @@ The node App is a basic API endpoint which we used to test CORS responses as we 
 
 ## Product Liquid File
 Show case the product liquid file currently used. Our theme is built using slate so is modular.
+
+## Img Liquid File
+Takes an image object + config. parameters, outputs responsive images using either "sizes" attribute with a range of sources, or fixed width images with 1x and 2x sources.
